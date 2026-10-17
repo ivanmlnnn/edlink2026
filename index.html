@@ -2133,19 +2133,425 @@ html, body {
   max-width: 720px !important;
 }
 
+/* ==================== 100% AUTO RESPONSIVE ENGINE: DESKTOP vs MOBILE (iOS & ANDROID) ==================== */
+
+/* ----------------- 1. BASE NATIVE MOBILE APP DEFAULTS ----------------- */
+#app {
+  width: 100%;
+  max-width: 440px;
+  height: 100dvh;
+  max-height: 920px;
+  background: var(--bg);
+  position: relative;
+  margin: 0 auto;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 70px rgba(0,0,0,0.6);
+  transition: background 0.3s, max-width 0.35s ease;
+}
+
+.desktop-sidebar {
+  display: none !important;
+}
+
+/* ----------------- 2. AUTO IPHONE / iOS ADAPTATION ----------------- */
+html.platform-ios,
+html.platform-ios body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif !important;
+}
+html.platform-ios .real-top-header {
+  padding-top: max(14px, env(safe-area-inset-top)) !important;
+}
+html.platform-ios #sevima-dock {
+  padding-bottom: max(16px, env(safe-area-inset-bottom)) !important;
+  backdrop-filter: blur(25px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(25px) saturate(190%) !important;
+  background: rgba(255, 255, 255, 0.82) !important;
+  border-top: 0.5px solid rgba(0, 0, 0, 0.12) !important;
+}
+body.dark html.platform-ios #sevima-dock,
+html.platform-ios body.dark #sevima-dock {
+  background: rgba(18, 30, 22, 0.85) !important;
+  border-top: 0.5px solid rgba(255, 255, 255, 0.08) !important;
+}
+html.platform-ios .ios-home-bar-indicator {
+  display: block !important;
+  width: 134px;
+  height: 5px;
+  background: rgba(0, 0, 0, 0.32);
+  border-radius: 100px;
+  margin: 6px auto 2px;
+}
+body.dark html.platform-ios .ios-home-bar-indicator,
+html.platform-ios body.dark .ios-home-bar-indicator {
+  background: rgba(255, 255, 255, 0.35) !important;
+}
+
+/* ----------------- 3. AUTO ANDROID / MATERIAL YOU ADAPTATION ----------------- */
+html.platform-android,
+html.platform-android body {
+  font-family: "Roboto", "Google Sans", -apple-system, sans-serif !important;
+}
+html.platform-android #sevima-dock {
+  background: var(--card) !important;
+  box-shadow: 0 -2px 14px rgba(0, 0, 0, 0.08) !important;
+}
+html.platform-android .dock-tab-btn.active .dock-icon-svg {
+  background: rgba(7, 133, 42, 0.15) !important;
+  padding: 4px 14px;
+  border-radius: 16px;
+  transition: all 0.2s ease;
+}
+
+/* ----------------- 4. AUTO DESKTOP & LAPTOP WEB PORTAL ADAPTATION ----------------- */
+@media (min-width: 992px) {
+  html.platform-desktop,
+  html.platform-desktop body {
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: block !important;
+    overflow: hidden !important;
+    background: #f1f5f9 !important;
+  }
+  html.platform-desktop body.dark {
+    background: #080f0a !important;
+  }
+
+  html.platform-desktop #app {
+    max-width: 100% !important;
+    width: 100% !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    display: flex !important;
+    flex-direction: row !important;
+    position: relative !important;
+    overflow: hidden !important;
+    background: transparent !important;
+  }
+
+  /* Desktop Left Sidebar Rail */
+  html.platform-desktop .desktop-sidebar {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 270px !important;
+    height: 100vh !important;
+    background: var(--card) !important;
+    border-right: 1px solid var(--border) !important;
+    padding: 20px 16px !important;
+    flex-shrink: 0 !important;
+    z-index: 50 !important;
+    box-shadow: 2px 0 16px rgba(0,0,0,0.03) !important;
+  }
+
+  .desktop-sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+  }
+  .desktop-brand-logo {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #07852a 0%, #055a1d 100%);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    box-shadow: 0 4px 12px rgba(7,133,42,0.25);
+  }
+  .desktop-brand-title {
+    font-size: 13px;
+    font-weight: 900;
+    color: var(--text);
+    letter-spacing: 0.3px;
+  }
+  .desktop-brand-sub {
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--green);
+    letter-spacing: 0.5px;
+    margin-top: 1px;
+  }
+
+  /* Active User Card in Sidebar */
+  .desktop-user-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    cursor: pointer;
+    margin-bottom: 20px;
+    transition: all 0.2s ease;
+  }
+  .desktop-user-card:hover {
+    border-color: var(--green);
+    background: var(--pale);
+    transform: translateY(-1px);
+  }
+  .desktop-user-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+    color: #fff;
+    font-weight: 900;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  .desktop-user-meta {
+    flex: 1;
+    min-width: 0;
+  }
+  .desktop-user-name {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .desktop-user-role {
+    font-size: 10px;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Navigation Links */
+  .desktop-nav-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+  }
+  .desk-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s ease;
+  }
+  .desk-nav-item:hover {
+    color: var(--text);
+    background: var(--pale);
+  }
+  .desk-nav-item.active {
+    color: var(--green-deep);
+    background: var(--pale);
+    font-weight: 900;
+    border-left: 3.5px solid var(--green);
+    box-shadow: 0 2px 8px rgba(7, 133, 42, 0.08);
+  }
+  .desk-nav-icon {
+    font-size: 18px;
+    width: 24px;
+    text-align: center;
+  }
+  .desk-nav-label {
+    flex: 1;
+  }
+  .desk-nav-badge {
+    font-size: 10px;
+    font-weight: 900;
+    background: #ef4444;
+    color: #fff;
+    padding: 2px 7px;
+    border-radius: 10px;
+  }
+
+  /* Bottom Controls in Sidebar */
+  .desktop-sidebar-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+  .btn-desk-quick {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .btn-desk-quick:hover {
+    border-color: var(--green);
+    background: var(--pale);
+  }
+  .btn-desk-logout {
+    color: #ef4444;
+  }
+  .btn-desk-logout:hover {
+    background: #fee2e2;
+    border-color: #fca5a5;
+  }
+
+  /* Hide Mobile Bottom Dock on Desktop */
+  html.platform-desktop #sevima-dock {
+    display: none !important;
+  }
+
+  /* Desktop Screens Container */
+  html.platform-desktop .screen {
+    position: relative !important;
+    inset: auto !important;
+    width: 100% !important;
+    height: 100vh !important;
+    flex: 1 !important;
+    display: none !important;
+    flex-direction: column !important;
+    background: var(--bg) !important;
+    overflow: hidden !important;
+  }
+  html.platform-desktop .screen.active {
+    display: flex !important;
+  }
+
+  /* Desktop Screen Body Grid */
+  html.platform-desktop .screen-body {
+    padding: 20px 32px 40px !important;
+    max-width: 1300px !important;
+    margin: 0 auto !important;
+    width: 100% !important;
+  }
+
+  /* Desktop Two-Column Layout for Home */
+  html.platform-desktop #screen-home .screen-body {
+    display: grid !important;
+    grid-template-columns: 1.15fr 0.85fr !important;
+    gap: 24px !important;
+    align-items: start !important;
+  }
+  html.platform-desktop .home-col-left {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 16px !important;
+  }
+  html.platform-desktop .home-col-right {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 16px !important;
+    position: sticky !important;
+    top: 20px !important;
+  }
+
+  /* Expand academic grid on desktop */
+  html.platform-desktop .academic-grid {
+    grid-template-columns: repeat(7, 1fr) !important;
+    gap: 12px !important;
+  }
+
+  /* Center KTM 3D Card on Desktop Account Screen */
+  html.platform-desktop #screen-account .screen-body {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 28px !important;
+    align-items: start !important;
+  }
+}
+
 </style>
 </head>
 <body>
 
-<!-- FLOATING DEVICE SWITCHER (DESKTOP & ALL VERSIONS ADAPTATION) -->
-<div id="device-view-switcher" class="device-switcher-bar" title="Ubah Tampilan Pratinjau Perangkat">
-  <span class="device-switcher-title">🖥️ Pratinjau:</span>
-  <button type="button" class="btn-device-mode active" id="btn-mode-mobile" onclick="setDeviceViewMode('mobile')">📱 HP (440px)</button>
-  <button type="button" class="btn-device-mode" id="btn-mode-tablet" onclick="setDeviceViewMode('tablet')">📱 Tablet (720px)</button>
-  <button type="button" class="btn-device-mode" id="btn-mode-desktop" onclick="setDeviceViewMode('desktop')">💻 Desktop (980px)</button>
-</div>
-
 <div id="app">
+  <!-- ==================== DESKTOP ENTERPRISE SIDEBAR (AUTO ACTIVE ON DESKTOP) ==================== -->
+  <aside id="desktop-sidebar" class="desktop-sidebar">
+    <div class="desktop-sidebar-brand">
+      <div class="desktop-brand-logo">🏛️</div>
+      <div>
+        <div class="desktop-brand-title">UTA '45 JAKARTA</div>
+        <div class="desktop-brand-sub">SIAKAD CLOUD & EDLINK</div>
+      </div>
+    </div>
+
+    <!-- Active User Mini Card in Sidebar -->
+    <div class="desktop-user-card" onclick="openQuickRoleModal()" title="Klik untuk beralih akun/peran">
+      <div class="desktop-user-avatar">
+        <span id="desk-avatar-txt">IM</span>
+      </div>
+      <div class="desktop-user-meta">
+        <div class="desktop-user-name" id="desk-user-name">Ivanmin</div>
+        <div class="desktop-user-role" id="desk-user-sub">Mahasiswa • Informatika</div>
+      </div>
+      <span style="font-size:12px;color:var(--muted);">⚙️</span>
+    </div>
+
+    <!-- Navigation Items -->
+    <nav class="desktop-nav-menu">
+      <button type="button" class="desk-nav-item active" id="desk-nav-home" onclick="navigateTo('screen-home','dock-home')">
+        <span class="desk-nav-icon">🏠</span>
+        <span class="desk-nav-label">Beranda Kampus</span>
+      </button>
+      <button type="button" class="desk-nav-item" id="desk-nav-explore" onclick="navigateTo('screen-explore','dock-explore')">
+        <span class="desk-nav-icon">🚀</span>
+        <span class="desk-nav-label">Jelajah & Komunitas</span>
+      </button>
+      <button type="button" class="desk-nav-item" id="desk-nav-classroom" onclick="navigateTo('screen-classroom','dock-classroom')">
+        <span class="desk-nav-icon">📚</span>
+        <span class="desk-nav-label">Ruang Kelas & Tugas</span>
+      </button>
+      <button type="button" class="desk-nav-item" id="desk-nav-chat" onclick="navigateTo('screen-chat','dock-chat')">
+        <span class="desk-nav-icon">💬</span>
+        <span class="desk-nav-label">Pesan & Diskusi</span>
+        <span class="desk-nav-badge">3</span>
+      </button>
+      <button type="button" class="desk-nav-item" id="desk-nav-account" onclick="navigateTo('screen-account','dock-account')">
+        <span class="desk-nav-icon">🪪</span>
+        <span class="desk-nav-label">KTM 3D & Akun</span>
+      </button>
+      <button type="button" class="desk-nav-item" id="desk-nav-leaderboard" onclick="openLeaderboard()">
+        <span class="desk-nav-icon">🏆</span>
+        <span class="desk-nav-label">Leaderboard Kampus</span>
+      </button>
+    <div class="ios-home-bar-indicator" style="display:none;"></div>
+  </nav>
+
+    <!-- Bottom Sidebar Controls -->
+    <div class="desktop-sidebar-footer">
+      <button type="button" class="btn-desk-quick" onclick="toggleDarkMode()">
+        <span>🌓</span>
+        <span id="desk-dark-label">Tema Gelap</span>
+      </button>
+      <button type="button" class="btn-desk-quick btn-desk-logout" onclick="triggerLogout()">
+        <span>🚪</span>
+        <span>Keluar Sesi</span>
+      </button>
+    </div>
+  </aside>
+
 
   <!-- ==================== 3D LOADING OVERLAY ==================== -->
   <div id="loading-3d-screen" class="loading-overlay-3d" style="display:none;">
@@ -4562,6 +4968,15 @@ function applyUserRole(role) {
   if (topName) topName.textContent = prof.name;
   var topSub = document.getElementById('top-user-sub');
   if (topSub) topSub.textContent = prof.topSub;
+  // Sync Desktop Sidebar User Meta
+  const deskName = document.getElementById('desk-user-name');
+  if (deskName) deskName.textContent = prof.name;
+  const deskSub = document.getElementById('desk-user-sub');
+  if (deskSub) deskSub.textContent = prof.topSub;
+  const deskAvatar = document.getElementById('desk-avatar-txt');
+  if (deskAvatar) {
+    deskAvatar.textContent = (role === 'dosen') ? 'DR' : ((role === 'root') ? 'AD' : 'IM');
+  }
 
   // 2. Role Banner on Home Screen
   var bannerContainer = document.getElementById('role-banner-container');
@@ -5903,6 +6318,36 @@ function submitAiRepostWithComment() {
   }, 1200);
 }
 
+
+/* ==================== 100% AUTOMATIC DEVICE & OS DETECTION ENGINE ==================== */
+function initAutoDeviceEngine() {
+  const ua = navigator.userAgent || '';
+  const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isAndroid = /Android/.test(ua);
+  const isDesktop = window.innerWidth >= 992 && !isIOS && !isAndroid;
+
+  const root = document.documentElement;
+  root.classList.remove('platform-ios', 'platform-android', 'platform-desktop', 'platform-mobile');
+
+  if (isIOS) {
+    root.classList.add('platform-ios', 'platform-mobile');
+    const homeBar = document.querySelector('.ios-home-bar-indicator');
+    if (homeBar) homeBar.style.display = 'block';
+  } else if (isAndroid) {
+    root.classList.add('platform-android', 'platform-mobile');
+  }
+
+  if (isDesktop) {
+    root.classList.add('platform-desktop');
+  } else if (!isIOS && !isAndroid) {
+    if (window.innerWidth < 992) root.classList.add('platform-mobile');
+    else root.classList.add('platform-desktop');
+  }
+}
+
+window.addEventListener('resize', initAutoDeviceEngine, { passive: true });
+window.addEventListener('orientationchange', initAutoDeviceEngine, { passive: true });
+
 document.addEventListener('DOMContentLoaded', () => {
   if (localStorage.getItem('edlink_dark_pref') === '1') {
     document.body.classList.add('dark');
@@ -5942,6 +6387,7 @@ document.addEventListener('DOMContentLoaded', () => {
     console.error('Error initSmoothScrollEngine:', e);
   }
 
+  initAutoDeviceEngine();
   applyUserRole('mahasiswa');
   initDeviceViewMode();
   initLiveDateSystem();
@@ -5987,6 +6433,20 @@ function navigateTo(screenId, dockId) {
   }
 
   activeScreenId = screenId;
+  // Sync Desktop Sidebar Active Item
+  const screenToNavMap = {
+    'screen-home': 'desk-nav-home',
+    'screen-explore': 'desk-nav-explore',
+    'screen-classroom': 'desk-nav-classroom',
+    'screen-chat': 'desk-nav-chat',
+    'screen-account': 'desk-nav-account'
+  };
+  document.querySelectorAll('.desk-nav-item').forEach(b => b.classList.remove('active'));
+  const targetDeskNavId = screenToNavMap[screenId];
+  if (targetDeskNavId) {
+    const el = document.getElementById(targetDeskNavId);
+    if (el) el.classList.add('active');
+  }
   activeDockId = dockId || activeDockId;
 
   // Smart 3D GPU Power Management: Only run 3D loops when screen is active
