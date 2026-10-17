@@ -1,0 +1,22 @@
+{
+  "name": "edlink-campus-web",
+  "version": "1.0.0",
+  "description": "Official Sevima EdLink Campus Web & Mobile Progressive Application with 3D Holographic Engine & AI Gamification",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve .",
+    "dev": "npx serve ."
+  },
+  "keywords": [
+    "edlink",
+    "sevima",
+    "campus-siakad",
+    "e-learning",
+    "threejs",
+    "gamification",
+    "web-app",
+    "mobile-first"
+  ],
+  "author": "Ivanmin",
+  "license": "MIT"
+}
