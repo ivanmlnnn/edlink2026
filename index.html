@@ -1979,7 +1979,7 @@ html, body {
   border-color: var(--green); background: #fff;
 }
 
-/* ==================== AI COMPANION & COMMUNITY MODAL STYLES ==================== */
+/* ==================== SEVIMA AI & COMMUNITY MODAL STYLES ==================== */
 .ai-modal-header {
   display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
 }
@@ -2698,7 +2698,7 @@ html.platform-android .dock-tab-btn.active .dock-icon-svg {
       </div>
 
       <!-- 3D INTERACTIVE AI DASHBOARD (TAP UNTUK AI ASISTEN & GAMIFIKASI) -->
-      <div class="mascot-3d-card" id="mascotCard3D" onclick="openAiCompanionModal()" title="Tap Model 3D untuk Buka AI Companion & Gamifikasi">
+      <div class="mascot-3d-card" id="mascotCard3D" onclick="openAiCompanionModal()" title="Tap Model 3D untuk Buka Sevima AI & Gamifikasi">
         <div class="mascot-3d-canvas-wrap" id="mascotViewport">
           <canvas id="mascot3DCanvas"></canvas>
         </div>
@@ -5050,6 +5050,7 @@ function applyUserRole(role) {
     else cardId.textContent = 'NIM: 2024001';
   }
   updateCardBeoAvatar(currentMajor, role);
+  if (typeof renderDosenSocialTasks === "function") renderDosenSocialTasks();
   var cardStatus = document.getElementById('card-status-text');
   if (cardStatus) {
     if (role === 'dosen') cardStatus.textContent = 'DOSEN AKTIF / DIKTI 2024/2025';
@@ -5170,6 +5171,7 @@ function applyUserRole(role) {
     renderTodoList();
   }
   renderCommunityFeed();
+  renderDosenSocialTasks();
   renderNewsList();
 }
 
@@ -6087,236 +6089,482 @@ function renderHomeTodaySchedule(dayOfWeek) {
 }
 
 
-/* ==================== AI VISION VERIFIER & REPOST GAMIFICATION ENGINE ==================== */
+/* ==================== SEVIMA AI VISION VERIFIER & TASK+ DOSEN GAMIFICATION ENGINE ==================== */
 let selectedProofBase64 = null;
 let isVerifyingAiProof = false;
-let isSubmittingAiRepost = false;
+let isSubmittingTaskPlus = false;
 
-function handleProofImageSelected(event) {
-  const file = event.target.files && event.target.files[0];
-  if (!file) return;
+// Structured Lecturer-Assigned Social Gamification Tasks
+let DOSEN_SOCIAL_TASKS = [
+  {
+    id: 'task-yt-1',
+    dosen: 'Dr. Ahmad Fauzi, M.T.',
+    matkul: 'Pemrograman Mobile',
+    platform: 'YouTube Sevima Official',
+    platformIcon: '📺',
+    platformBadgeBg: '#fee2e2',
+    platformBadgeColor: '#dc2626',
+    title: 'Tonton & Repost Video Edukasi: Clean Architecture MVVM di Jetpack Compose',
+    dosenLink: 'https://youtube.com/watch?v=sevima-android-mvvm-compose',
+    instructions: '1. Tonton video tutorial Sevima Official & subscribe channel.\n2. Repost tautan materi ke LinkedIn atau Instagram Story.\n3. Tuliskan ulasan refleksi minimal 10 kata mengenai peran ViewModel & StateFlow dalam memisahkan logika UI.',
+    rewardXp: 250,
+    rewardCoins: 100,
+    completed: false,
+    verifiedData: null
+  },
+  {
+    id: 'task-ig-2',
+    dosen: 'Dr. Siti Rahma, M.Kom.',
+    matkul: 'Basis Data Lanjut',
+    platform: 'Instagram Kampus',
+    platformIcon: '📸',
+    platformBadgeBg: '#fce7f3',
+    platformBadgeColor: '#db2777',
+    title: 'Repost Infografis Riset: B-Tree vs LSM-Tree Indexing pada Big Data',
+    dosenLink: 'https://instagram.com/p/edlink-uta45-database-research',
+    instructions: '1. Follow Instagram @edlink.campus & @sevima_official.\n2. Repost infografis riset database ke feed atau cerita Instagram kamu.\n3. Berikan komentar analisis mengapa B-Tree ideal untuk query database relasional OLTP.',
+    rewardXp: 200,
+    rewardCoins: 80,
+    completed: false,
+    verifiedData: null
+  },
+  {
+    id: 'task-li-3',
+    dosen: 'Prof. Dr. Ir. Budi Santoso, M.Sc.',
+    matkul: 'Kecerdasan Buatan & Kalkulus',
+    platform: 'LinkedIn Kemahasiswaan',
+    platformIcon: '💼',
+    platformBadgeBg: '#e0f2fe',
+    platformBadgeColor: '#0284c7',
+    title: 'Diskusi & Repost: Transformasi Digital Kampus Merdeka Berbasis Sevima AI Cloud',
+    dosenLink: 'https://linkedin.com/pulse/sevima-ai-campus-transformation',
+    instructions: '1. Buka artikel riset Sevima AI di LinkedIn.\n2. Lakukan Quote Repost di akun LinkedIn kamu.\n3. Cantumkan komentar perspektif kamu tentang masa depan SIAKAD terotomasi AI.',
+    rewardXp: 300,
+    rewardCoins: 150,
+    completed: false,
+    verifiedData: null
+  },
+  {
+    id: 'task-tt-4',
+    dosen: 'Dr. Rina Yulianti, M.Kom.',
+    matkul: 'Jaringan Komputer Enterprise',
+    platform: 'TikTok Edukasi',
+    platformIcon: '🎵',
+    platformBadgeBg: '#f3f4f6',
+    platformBadgeColor: '#111827',
+    title: 'Microlearning: Keamanan Jaringan Zero-Trust Architecture dalam 60 Detik',
+    dosenLink: 'https://tiktok.com/@sevima_campus/video/zerotrust-networking-101',
+    instructions: '1. Tonton video microlearning & ikuti akun TikTok Sevima.\n2. Repost video ke akun media sosialmu.\n3. Berikan ulasan refleksi penerapan Zero Trust pada server kampus.',
+    rewardXp: 180,
+    rewardCoins: 75,
+    completed: true,
+    verifiedData: {
+      url: 'https://tiktok.com/@ivanmin_cs/video/repost-zerotrust-7821',
+      comment: 'Prinsip Zero Trust "never trust, always verify" sangat krusial dalam melindungi kerahasiaan data nilai dan presensi mahasiswa pada server SIAKAD UTA 45 Jakarta.',
+      score: 97,
+      feedback: 'Sevima AI mendeteksi refleksi yang sangat analitis dan tepat sasaran dengan materi keamanan jaringan Dosen Dr. Rina Yulianti.'
+    }
+  }
+];
 
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    selectedProofBase64 = e.target.result;
-    const placeholder = document.getElementById('ai-upload-placeholder');
-    const previewBox = document.getElementById('ai-upload-preview-box');
-    const previewImg = document.getElementById('ai-upload-preview-img');
-    const filenameEl = document.getElementById('ai-upload-filename');
+// Student Submissions Log for Dosen Review
+let STUDENT_TASKPLUS_SUBMISSIONS = [
+  {
+    studentName: 'Ivanmin',
+    nim: '2024001',
+    taskTitle: 'Microlearning: Keamanan Jaringan Zero-Trust Architecture',
+    platform: 'TikTok Edukasi',
+    url: 'https://tiktok.com/@ivanmin_cs/video/repost-zerotrust-7821',
+    comment: 'Prinsip Zero Trust "never trust, always verify" sangat krusial melindungi data nilai mahasiswa pada server SIAKAD UTA 45 Jakarta.',
+    aiScore: 97,
+    xpAwarded: 180,
+    coinsAwarded: 75,
+    timeAgo: '1 jam lalu',
+    endorsedByDosen: true
+  },
+  {
+    studentName: 'Siti Rahmawati',
+    nim: '2024045',
+    taskTitle: 'Tonton & Repost Video: Clean Architecture MVVM',
+    platform: 'YouTube Sevima Official',
+    url: 'https://linkedin.com/posts/sitirahmawati_android-mvvm-sevima',
+    comment: 'Pemisahan concern antara UI State dan Business Logic di MVVM mempermudah unit testing komponen SIAKAD.',
+    aiScore: 95,
+    xpAwarded: 250,
+    coinsAwarded: 100,
+    timeAgo: '3 jam lalu',
+    endorsedByDosen: false
+  }
+];
 
-    if (placeholder) placeholder.style.display = 'none';
-    if (previewBox) previewBox.style.display = 'flex';
-    if (previewImg) previewImg.src = selectedProofBase64;
-    if (filenameEl) filenameEl.textContent = file.name;
-
-    vibrate(10);
-    showToast('📸 Screenshot dipilih: ' + file.name);
-  };
-  reader.readAsDataURL(file);
+function toggleDeployTaskPlusForm() {
+  vibrate(10);
+  const form = document.getElementById('form-dosen-deploy-taskplus');
+  if (form) {
+    const isHidden = form.style.display === 'none' || form.style.display === '';
+    form.style.display = isHidden ? 'block' : 'none';
+  }
 }
 
-function clearProofImage() {
-  selectedProofBase64 = null;
-  const input = document.getElementById('ai-proof-file-input');
-  if (input) input.value = '';
-
-  const placeholder = document.getElementById('ai-upload-placeholder');
-  const previewBox = document.getElementById('ai-upload-preview-box');
-  if (placeholder) placeholder.style.display = 'block';
-  if (previewBox) previewBox.style.display = 'none';
+function openTaskDosenLink(taskId) {
+  const task = DOSEN_SOCIAL_TASKS.find(t => t.id === taskId);
+  if (task && task.dosenLink) {
+    window.open(task.dosenLink, '_blank');
+    showToast('🔗 Membuka link materi dosen: ' + task.platform);
+  }
 }
 
-function triggerAiProofVerification() {
-  if (isVerifyingAiProof) return;
-  
-  if (!selectedProofBase64) {
-    // If user hasn't selected a local file yet, provide a convenient instant demo verification option
-    showToast('💡 Silakan pilih file screenshot bukti terlebih dahulu!');
-    const input = document.getElementById('ai-proof-file-input');
-    if (input) input.click();
-    return;
+function deployNewTaskPlus(e) {
+  if (e) e.preventDefault();
+  vibrate(20);
+
+  const matkul = document.getElementById('taskplus-inp-matkul').value;
+  const platform = document.getElementById('taskplus-inp-platform').value;
+  const title = document.getElementById('taskplus-inp-title').value.trim();
+  const link = document.getElementById('taskplus-inp-link').value.trim();
+  const desc = document.getElementById('taskplus-inp-desc').value.trim();
+  const xp = parseInt(document.getElementById('taskplus-inp-xp').value) || 200;
+  const coins = parseInt(document.getElementById('taskplus-inp-coins').value) || 80;
+
+  if (!title || !link) return;
+
+  let platformIcon = '🔗';
+  let badgeBg = '#f3f4f6';
+  let badgeColor = '#1f2937';
+  if (platform.includes('YouTube')) {
+    platformIcon = '📺'; badgeBg = '#fee2e2'; badgeColor = '#dc2626';
+  } else if (platform.includes('Instagram')) {
+    platformIcon = '📸'; badgeBg = '#fce7f3'; badgeColor = '#db2777';
+  } else if (platform.includes('LinkedIn')) {
+    platformIcon = '💼'; badgeBg = '#e0f2fe'; badgeColor = '#0284c7';
+  } else if (platform.includes('TikTok')) {
+    platformIcon = '🎵'; badgeBg = '#f3f4f6'; badgeColor = '#111827';
   }
 
-  isVerifyingAiProof = true;
-  vibrate(15);
+  const currentProf = ROLE_PROFILES[currentUserRole] || ROLE_PROFILES.dosen;
+  const newTask = {
+    id: 'task-custom-' + Date.now(),
+    dosen: currentProf.name || 'Dr. Ahmad Fauzi, M.T.',
+    matkul: matkul,
+    platform: platform,
+    platformIcon: platformIcon,
+    platformBadgeBg: badgeBg,
+    platformBadgeColor: badgeColor,
+    title: title,
+    dosenLink: link,
+    instructions: desc,
+    rewardXp: xp,
+    rewardCoins: coins,
+    completed: false,
+    verifiedData: null
+  };
 
-  const btn = document.getElementById('btn-run-ai-verification');
-  const progressWrap = document.getElementById('ai-scanning-progress-wrap');
-  const stepTitle = document.getElementById('ai-scan-step-title');
-  const scanPct = document.getElementById('ai-scan-pct');
-  const scanBar = document.getElementById('ai-scan-bar');
-  const platform = document.getElementById('ai-verify-platform').value;
+  DOSEN_SOCIAL_TASKS.unshift(newTask);
+  renderDosenSocialTasks();
+  toggleDeployTaskPlusForm();
 
-  if (btn) btn.disabled = true;
-  if (progressWrap) progressWrap.style.display = 'block';
+  showToast('🚀 Task+ baru berhasil diterbitkan oleh Dosen ke seluruh mahasiswa!');
 
-  // Step 1: OCR Vision Analysis
-  if (stepTitle) stepTitle.textContent = '🔍 [1/3] Membaca tangkapan layar (OCR Vision Scan ' + platform + ')...';
-  if (scanPct) scanPct.textContent = '35%';
-  if (scanBar) scanBar.style.width = '35%';
-
-  setTimeout(() => {
-    // Step 2: Detection of Subscribe / Repost Badges
-    vibrate(12);
-    if (stepTitle) stepTitle.textContent = '🎯 [2/3] Mendeteksi status "Subscribed / Mengikuti" & Lonceng Notifikasi...';
-    if (scanPct) scanPct.textContent = '75%';
-    if (scanBar) scanBar.style.width = '75%';
-
-    setTimeout(() => {
-      // Step 3: Success Verification
-      vibrate(25);
-      if (stepTitle) stepTitle.textContent = '✅ [3/3] Bukti Valid! AI mengonfirmasi status Subscribe aktif pada ' + platform;
-      if (scanPct) scanPct.textContent = '100%';
-      if (scanBar) scanBar.style.width = '100%';
-
-      // Award Points & Update Gamification
-      addPoints(200, '🎉 AI Verifier: Bukti Subscribe Valid! +200 XP & +100 Koin Ditambahkan!');
-      
-      const subsEl = document.getElementById('stat-my-subs');
-      if (subsEl) {
-        const cur = parseInt(subsEl.textContent) || 418;
-        subsEl.textContent = cur + 1;
-      }
-      const likesEl = document.getElementById('stat-my-likes');
-      if (likesEl) {
-        const cur = parseInt(likesEl.textContent) || 342;
-        likesEl.textContent = cur + 12;
-      }
-
-      // Add to Portfolio list
-      const list = document.getElementById('ai-my-posts-list');
-      if (list) {
-        const proofCard = document.createElement('div');
-        proofCard.className = 'ai-quest-card';
-        proofCard.style.borderLeft = '4px solid #10b981';
-        proofCard.style.animation = 'scaleIn 0.3s ease';
-        proofCard.innerHTML = [
-          '<div style="display:flex;justify-content:space-between;align-items:flex-start;">',
-          '  <div>',
-          '    <div style="font-weight:800;font-size:12px;color:var(--text);">✅ Bukti Subscribe: ' + platform + '</div>',
-          '    <div style="font-size:10px;color:var(--green);margin-top:2px;font-weight:700;">Terverifikasi AI Vision • Baru Saja • +200 XP</div>',
-          '  </div>',
-          '  <span style="font-size:10px;background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:10px;font-weight:800;">VERIFIED</span>',
-          '</div>'
-        ].join('');
-        list.insertBefore(proofCard, list.firstChild);
-      }
-
-      // Trigger Card Wobble
-      if (typeof triggerCardWobble === 'function') triggerCardWobble();
-
-      setTimeout(() => {
-        isVerifyingAiProof = false;
-        if (btn) btn.disabled = false;
-        clearProofImage();
-      }, 1000);
-
-    }, 900);
-  }, 900);
+  document.getElementById('taskplus-inp-title').value = '';
+  document.getElementById('taskplus-inp-link').value = '';
+  document.getElementById('taskplus-inp-desc').value = '';
 }
 
-function submitAiRepostWithComment() {
-  if (isSubmittingAiRepost) return;
+function renderDosenSocialTasks() {
+  const container = document.getElementById('dosen-social-tasks-list');
+  const manageBox = document.getElementById('dosen-taskplus-manage-box');
+  const submissionsContainer = document.getElementById('dosen-taskplus-submissions-list');
+  const portfolioContainer = document.getElementById('ai-my-posts-list');
 
-  const urlInput = document.getElementById('ai-repost-url-input');
-  const commentInput = document.getElementById('ai-repost-comment-input');
+  // Toggle Dosen Manage Box Visibility based on currentUserRole
+  if (manageBox) {
+    manageBox.style.display = (currentUserRole === 'dosen') ? 'block' : 'none';
+  }
+
+  // Calculate Gamification Stats
+  let totalXp = 800;
+  let totalCoins = 250;
+  let completedCount = 0;
+
+  DOSEN_SOCIAL_TASKS.forEach(t => {
+    if (t.completed) {
+      totalXp += t.rewardXp;
+      totalCoins += t.rewardCoins;
+      completedCount++;
+    }
+  });
+
+  const xpEl = document.getElementById('stat-taskplus-xp');
+  if (xpEl) xpEl.textContent = totalXp.toLocaleString('id-ID');
+
+  const compEl = document.getElementById('stat-taskplus-completed');
+  if (compEl) compEl.textContent = completedCount + ' / ' + DOSEN_SOCIAL_TASKS.length;
+
+  const coinsEl = document.getElementById('stat-taskplus-coins');
+  if (coinsEl) coinsEl.textContent = totalCoins.toLocaleString('id-ID');
+
+  // Render Tasks List for Students
+  if (container) {
+    container.innerHTML = DOSEN_SOCIAL_TASKS.map(task => {
+      if (task.completed) {
+        return [
+          '<div class="ai-quest-card" style="margin-bottom:12px;border:1.5px solid #86efac;background:radial-gradient(circle at 90% 10%, rgba(16,185,129,0.08) 0%, var(--card) 100%);">',
+          '  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">',
+          '    <div style="display:flex;align-items:center;gap:6px;">',
+          '      <span style="font-size:16px;">' + task.platformIcon + '</span>',
+          '      <div>',
+          '        <div style="font-size:11px;font-weight:900;color:var(--text);">' + task.dosen + '</div>',
+          '        <div style="font-size:10px;color:var(--muted);">' + task.matkul + '</div>',
+          '      </div>',
+          '    </div>',
+          '    <span style="font-size:10px;font-weight:900;background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:10px;">✅ TERVERIFIKASI SEVIMA AI</span>',
+          '  </div>',
+          '  <div style="font-size:13px;font-weight:900;color:var(--text);margin-bottom:6px;">' + task.title + '</div>',
+          '  <div style="background:var(--bg);border-radius:10px;padding:8px 10px;margin-bottom:8px;font-size:11px;border-left:3px solid #10b981;">',
+          '    <div style="font-weight:800;color:var(--text);margin-bottom:2px;">🔗 Link Repost Mahasiswa:</div>',
+          '    <a href="' + (task.verifiedData ? task.verifiedData.url : '#') + '" target="_blank" style="color:#0284c7;text-decoration:none;word-break:break-all;font-size:11px;">' + (task.verifiedData ? task.verifiedData.url : '') + ' ↗</a>',
+          '    <div style="font-weight:800;color:var(--text);margin-top:6px;margin-bottom:2px;">💬 Komentar Refleksi:</div>',
+          '    <div style="color:var(--muted);font-style:italic;">"' + (task.verifiedData ? task.verifiedData.comment : '') + '"</div>',
+          '  </div>',
+          '  <div style="display:flex;justify-content:space-between;align-items:center;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:6px 10px;">',
+          '    <span style="font-size:11px;font-weight:800;color:#166534;">🤖 Nilai Sevima AI: ' + (task.verifiedData ? task.verifiedData.score : 98) + '/100</span>',
+          '    <span style="font-size:11px;font-weight:900;color:#15803d;">+' + task.rewardXp + ' XP & +' + task.rewardCoins + ' Koin Diklaim</span>',
+          '  </div>',
+          '</div>'
+        ].join('');
+      }
+
+      // Uncompleted Task Form
+      return [
+        '<div class="ai-quest-card" style="margin-bottom:14px;border:1.5px solid rgba(2,132,199,0.25);background:radial-gradient(circle at 95% 5%, rgba(2,132,199,0.06) 0%, var(--card) 100%);">',
+        '  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">',
+        '    <div style="display:flex;align-items:center;gap:6px;">',
+        '      <span style="font-size:18px;">' + task.platformIcon + '</span>',
+        '      <div>',
+        '        <div style="font-size:12px;font-weight:900;color:var(--text);">' + task.dosen + '</div>',
+        '        <div style="font-size:10px;color:var(--muted);">' + task.matkul + '</div>',
+        '      </div>',
+        '    </div>',
+        '    <span style="font-size:10px;font-weight:900;background:' + task.platformBadgeBg + ';color:' + task.platformBadgeColor + ';padding:2px 8px;border-radius:8px;">' + task.platform + '</span>',
+        '  </div>',
+        '  <div style="font-size:13px;font-weight:900;color:var(--text);line-height:1.35;margin-bottom:6px;">' + task.title + '</div>',
+        '  <div style="background:var(--bg);border-radius:10px;padding:8px 10px;margin-bottom:10px;border-left:3px solid #0284c7;">',
+        '    <div style="font-size:10px;font-weight:800;color:#0284c7;margin-bottom:3px;">🔗 Tautan Materi Dosen:</div>',
+        '    <a href="' + task.dosenLink + '" target="_blank" style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:#0369a1;font-weight:800;text-decoration:none;word-break:break-all;">',
+        '      <span>' + task.dosenLink + '</span> ↗',
+        '    </a>',
+        '    <div style="font-size:10px;font-weight:800;color:var(--muted);margin-top:6px;margin-bottom:2px;">📋 Petunjuk Dosen:</div>',
+        '    <div style="font-size:11px;color:var(--text);white-space:pre-line;line-height:1.4;">' + task.instructions + '</div>',
+        '  </div>',
+        '  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">',
+        '    <span style="font-size:11px;font-weight:900;color:var(--green);background:var(--green-pale);padding:2px 8px;border-radius:8px;">🎁 +' + task.rewardXp + ' XP & +' + task.rewardCoins + ' Koin</span>',
+        '    <button class="btn-schedule-pill" style="font-size:10px;padding:4px 10px;background:#f0fdf4;color:#166534;border:1px solid #86efac;" onclick="openTaskDosenLink(\'' + task.id + '\')">Buka Tautan Dosen ↗</button>',
+        '  </div>',
+        '  <!-- Submission Inputs -->',
+        '  <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px;">',
+        '    <div>',
+        '      <label style="font-size:10px;font-weight:800;color:var(--muted);display:block;margin-bottom:2px;">🔗 URL / Tautan Bukti Repost Media Sosial Kamu:</label>',
+        '      <input type="url" id="task-url-' + task.id + '" placeholder="Contoh: https://linkedin.com/posts/... atau https://instagram.com/p/..." style="width:100%;padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:var(--bg);font-size:11px;color:var(--text);outline:none;" />',
+        '    </div>',
+        '    <div>',
+        '      <label style="font-size:10px;font-weight:800;color:var(--muted);display:block;margin-bottom:2px;">💬 Komentar / Refleksi Edukatif (Sesuai Tugas Dosen):</label>',
+        '      <textarea id="task-comment-' + task.id + '" rows="3" placeholder="Tuliskan ulasan konsep, penjelasan materi, atau catatan refleksi kamu..." style="width:100%;padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:var(--bg);font-size:11px;color:var(--text);outline:none;resize:none;font-family:inherit;"></textarea>',
+        '    </div>',
+        '  </div>',
+        '  <!-- Live AI Scanning Progress Banner -->',
+        '  <div id="task-progress-' + task.id + '" style="display:none;margin-bottom:10px;padding:10px 12px;border-radius:10px;background:#f0fdf4;border:1px solid #86efac;">',
+        '    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">',
+        '      <span id="task-step-' + task.id + '" style="font-size:11px;font-weight:800;color:#166534;">🔍 [1/3] Sevima AI memvalidasi URL repost...</span>',
+        '      <span id="task-pct-' + task.id + '" style="font-size:11px;font-weight:900;color:#166534;">35%</span>',
+        '    </div>',
+        '    <div style="width:100%;height:6px;background:#bbf7d0;border-radius:6px;overflow:hidden;">',
+        '      <div id="task-bar-' + task.id + '" style="width:35%;height:100%;background:#16a34a;transition:width 0.3s ease;"></div>',
+        '    </div>',
+        '  </div>',
+        '  <button class="btn-schedule-pill" id="btn-submit-task-' + task.id + '" style="width:100%;padding:10px;background:linear-gradient(135deg, #07852a 0%, #055a1d 100%);color:#fff;font-weight:900;" onclick="submitTaskPlusGamification(\'' + task.id + '\')">',
+        '    🤖 Verifikasi & Klaim Hadiah dengan Sevima AI',
+        '  </button>',
+        '</div>'
+      ].join('');
+    }).join('');
+  }
+
+  // Render Submissions Monitor for Dosen
+  if (submissionsContainer) {
+    submissionsContainer.innerHTML = STUDENT_TASKPLUS_SUBMISSIONS.map((sub, idx) => {
+      return [
+        '<div style="background:var(--card);border:1px solid #bbf7d0;border-radius:10px;padding:10px;margin-bottom:8px;">',
+        '  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">',
+        '    <div>',
+        '      <span style="font-size:12px;font-weight:900;color:var(--text);">' + sub.studentName + ' (' + sub.nim + ')</span>',
+        '      <span style="font-size:10px;color:var(--muted);margin-left:4px;">• ' + sub.timeAgo + '</span>',
+        '    </div>',
+        '    <span style="font-size:10px;font-weight:900;background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:8px;">Skor AI: ' + sub.aiScore + '/100</span>',
+        '  </div>',
+        '  <div style="font-size:11px;font-weight:800;color:#0284c7;margin-bottom:2px;">Tugas: ' + sub.taskTitle + ' (' + sub.platform + ')</div>',
+        '  <div style="font-size:11px;color:var(--text);background:var(--bg);padding:6px 8px;border-radius:6px;margin:4px 0;font-style:italic;">"' + sub.comment + '"</div>',
+        '  <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">',
+        '    <a href="' + sub.url + '" target="_blank" style="font-size:10px;color:#0369a1;text-decoration:none;font-weight:700;">🔗 Buka Bukti Repost ↗</a>',
+        '    <button class="btn-schedule-pill" style="font-size:10px;padding:3px 8px;background:' + (sub.endorsedByDosen ? '#dcfce7' : '#0284c7') + ';color:' + (sub.endorsedByDosen ? '#15803d' : '#fff') + ';" onclick="endorseStudentSubmission(this, ' + idx + ')">',
+        '      ' + (sub.endorsedByDosen ? '⭐ Apresiasi Dosen Diberikan' : '⭐ Beri Apresiasi Dosen (+50 XP)'),
+        '    </button>',
+        '  </div>',
+        '</div>'
+      ].join('');
+    }).join('');
+  }
+
+  // Render Portfolio List
+  if (portfolioContainer) {
+    const completedTasks = DOSEN_SOCIAL_TASKS.filter(t => t.completed);
+    if (completedTasks.length === 0) {
+      portfolioContainer.innerHTML = '<div style="font-size:11px;color:var(--muted);text-align:center;padding:16px;">Belum ada Task+ yang diselesaikan. Pilih tugas dosen di atas untuk meraih XP!</div>';
+    } else {
+      portfolioContainer.innerHTML = completedTasks.map(ct => {
+        return [
+          '<div class="ai-quest-card" style="border-left:4px solid #10b981;margin-bottom:8px;">',
+          '  <div style="display:flex;justify-content:space-between;align-items:flex-start;">',
+          '    <div>',
+          '      <div style="font-weight:800;font-size:12px;color:var(--text);">✅ ' + ct.title + '</div>',
+          '      <div style="font-size:10px;color:var(--green);margin-top:2px;font-weight:700;">Disetujui Sevima AI • ' + ct.dosen + ' • +' + ct.rewardXp + ' XP</div>',
+          '      <div style="font-size:10px;color:var(--muted);margin-top:2px;">"' + (ct.verifiedData ? ct.verifiedData.comment : '') + '"</div>',
+          '    </div>',
+          '    <span style="font-size:10px;background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:10px;font-weight:800;">VERIFIED</span>',
+          '  </div>',
+          '</div>'
+        ].join('');
+      }).join('');
+    }
+  }
+}
+
+function endorseStudentSubmission(btn, subIndex) {
+  vibrate(15);
+  const sub = STUDENT_TASKPLUS_SUBMISSIONS[subIndex];
+  if (sub) {
+    sub.endorsedByDosen = true;
+    btn.style.background = '#dcfce7';
+    btn.style.color = '#15803d';
+    btn.textContent = '⭐ Apresiasi Dosen Diberikan';
+    showToast('⭐ Apresiasi Dosen diberikan kepada ' + sub.studentName + '! Nilai keaktifan SIAKAD dicatat.');
+  }
+}
+
+function submitTaskPlusGamification(taskId) {
+  if (isSubmittingTaskPlus) return;
+
+  const task = DOSEN_SOCIAL_TASKS.find(t => t.id === taskId);
+  if (!task) return;
+
+  const urlInput = document.getElementById('task-url-' + taskId);
+  const commentInput = document.getElementById('task-comment-' + taskId);
 
   const url = urlInput ? urlInput.value.trim() : '';
   const comment = commentInput ? commentInput.value.trim() : '';
 
   if (!url || !url.startsWith('http')) {
     vibrate(30);
-    showToast('⚠️ Masukkan tautan / URL repost media sosial yang valid (diawali http/https)!');
+    showToast('⚠️ Masukkan tautan / URL bukti repost yang valid (diawali http/https)!');
     if (urlInput) urlInput.focus();
     return;
   }
 
   if (!comment || comment.length < 8) {
     vibrate(30);
-    showToast('⚠️ Tuliskan komentar atau ulasan refleksi minimal 8 karakter untuk dinilai AI!');
+    showToast('⚠️ Tuliskan komentar atau ulasan refleksi minimal 8 karakter untuk dinilai Sevima AI!');
     if (commentInput) commentInput.focus();
     return;
   }
 
-  isSubmittingAiRepost = true;
+  isSubmittingTaskPlus = true;
   vibrate(15);
 
-  const btn = document.getElementById('btn-submit-ai-repost');
-  if (btn) btn.disabled = true;
+  const btn = document.getElementById('btn-submit-task-' + taskId);
+  const progBox = document.getElementById('task-progress-' + taskId);
+  const stepEl = document.getElementById('task-step-' + taskId);
+  const pctEl = document.getElementById('task-pct-' + taskId);
+  const barEl = document.getElementById('task-bar-' + taskId);
 
-  showToast('🤖 AI Companion sedang menganalisis kualitas refleksi & tautan repost...');
+  if (btn) btn.disabled = true;
+  if (progBox) progBox.style.display = 'block';
+
+  // Step 1: URL Validation
+  if (stepEl) stepEl.textContent = '🔍 [1/3] Sevima AI memvalidasi URL repost pada ' + task.platform + '...';
+  if (pctEl) pctEl.textContent = '35%';
+  if (barEl) barEl.style.width = '35%';
 
   setTimeout(() => {
-    // Dynamic AI NLP Evaluation
-    const wordCount = comment.split(/\s+/).length;
-    const keywords = ['edlink', 'sevima', 'kuliah', 'kampus', 'belajar', 'teknologi', 'informatika', 'mahasiswa', 'sistem', 'ai', 'data', 'coding', 'tugas'];
-    let matchedKeywords = 0;
-    keywords.forEach(kw => {
-      if (comment.toLowerCase().includes(kw)) matchedKeywords++;
-    });
-
-    const baseScore = 88;
-    const qualityScore = Math.min(99, baseScore + Math.min(10, wordCount) + (matchedKeywords * 2));
-    const bonusXp = qualityScore >= 95 ? 250 : 200;
-
-    const evalResultBox = document.getElementById('ai-repost-eval-result');
-    const scoreBadge = document.getElementById('ai-comment-score-badge');
-    const feedbackText = document.getElementById('ai-comment-feedback-text');
-
-    if (evalResultBox) evalResultBox.style.display = 'block';
-    if (scoreBadge) scoreBadge.textContent = 'Skor AI: ' + qualityScore + '/100';
-    if (feedbackText) {
-      feedbackText.textContent = 'Ulasan edukatif sangat berbobot (' + wordCount + ' kata). Terdeteksi keterkaitan materi akademik yang kuat. Bonus +' + bonusXp + ' XP diberikan!';
-    }
-
-    // Award Gamification Points
-    addPoints(bonusXp, '🎉 AI Gamifikasi: Repost & Komentar Lulus Verifikasi! +' + bonusXp + ' XP!');
-
-    // Update Stats
-    const repostEl = document.getElementById('stat-my-reposts');
-    if (repostEl) {
-      const cur = parseInt(repostEl.textContent) || 84;
-      repostEl.textContent = cur + 1;
-    }
-    const postsEl = document.getElementById('stat-my-posts');
-    if (postsEl) {
-      const cur = parseInt(postsEl.textContent) || 3;
-      postsEl.textContent = cur + 1;
-    }
-
-    // Add to Portfolio list
-    const list = document.getElementById('ai-my-posts-list');
-    if (list) {
-      const repostCard = document.createElement('div');
-      repostCard.className = 'ai-quest-card';
-      repostCard.style.borderLeft = '4px solid #0284c7';
-      repostCard.style.animation = 'scaleIn 0.3s ease';
-      repostCard.innerHTML = [
-        '<div style="display:flex;justify-content:space-between;align-items:flex-start;">',
-        '  <div style="flex:1;min-width:0;margin-right:8px;">',
-        '    <div style="font-weight:800;font-size:12px;color:var(--text);word-break:break-all;">🔗 ' + url + '</div>',
-        '    <div style="font-size:11px;color:var(--text);background:var(--bg);padding:6px 8px;border-radius:8px;margin-top:4px;font-style:italic;">"' + comment + '"</div>',
-        '    <div style="font-size:10px;color:#0284c7;margin-top:4px;font-weight:700;">✅ Terverifikasi AI • Nilai Refleksi ' + qualityScore + '/100 • +' + bonusXp + ' XP</div>',
-        '  </div>',
-        '  <span style="font-size:10px;background:#e0f2fe;color:#0369a1;padding:2px 8px;border-radius:10px;font-weight:800;">REPOST</span>',
-        '</div>'
-      ].join('');
-      list.insertBefore(repostCard, list.firstChild);
-    }
-
-    if (urlInput) urlInput.value = '';
-    if (commentInput) commentInput.value = '';
-
-    // Trigger 3D Card Wobble
-    if (typeof triggerCardWobble === 'function') triggerCardWobble();
+    // Step 2: NLP Reflection Scoring
+    vibrate(12);
+    if (stepEl) stepEl.textContent = '🧠 [2/3] Sevima AI NLP Engine menilai bobot refleksi akademik materi ' + task.matkul + '...';
+    if (pctEl) pctEl.textContent = '75%';
+    if (barEl) barEl.style.width = '75%';
 
     setTimeout(() => {
-      isSubmittingAiRepost = false;
-      if (btn) btn.disabled = false;
-    }, 1000);
+      // Step 3: Approval & Reward
+      vibrate(25);
+      
+      const wordCount = comment.split(/\s+/).length;
+      const keywords = ['edlink', 'sevima', 'arsitektur', 'mvvm', 'compose', 'android', 'database', 'btree', 'index', 'ai', 'cloud', 'security', 'zerotrust', 'jaringan', 'kuliah', 'dosen', 'siakad', 'uta'];
+      let matchedKeywords = 0;
+      keywords.forEach(kw => {
+        if (comment.toLowerCase().includes(kw)) matchedKeywords++;
+      });
 
-  }, 1200);
+      const baseScore = 91;
+      const finalScore = Math.min(99, baseScore + Math.min(5, wordCount) + (matchedKeywords * 2));
+
+      if (stepEl) stepEl.textContent = '✅ [3/3] Disetujui Sevima AI! Skor Kualitas: ' + finalScore + '/100 (Sangat Edukatif)';
+      if (pctEl) pctEl.textContent = '100%';
+      if (barEl) barEl.style.width = '100%';
+
+      // Mark task as completed
+      task.completed = true;
+      task.verifiedData = {
+        url: url,
+        comment: comment,
+        score: finalScore,
+        feedback: 'Sevima AI mengonfirmasi refleksi sangat analitis dan selaras dengan materi kuliah Dosen ' + task.dosen + '.'
+      };
+
+      // Add to student submissions for Dosen view
+      STUDENT_TASKPLUS_SUBMISSIONS.unshift({
+        studentName: 'Ivanmin',
+        nim: '2024001',
+        taskTitle: task.title,
+        platform: task.platform,
+        url: url,
+        comment: comment,
+        aiScore: finalScore,
+        xpAwarded: task.rewardXp,
+        coinsAwarded: task.rewardCoins,
+        timeAgo: 'Baru saja',
+        endorsedByDosen: false
+      });
+
+      // Award Gamification Points & Sync 3D Card
+      addPoints(task.rewardXp, '🎉 Sevima AI: Task+ Dosen Disetujui! +' + task.rewardXp + ' XP & +' + task.rewardCoins + ' Koin Ditambahkan!');
+
+      // Trigger 3D Card Spring Wobble
+      if (typeof triggerCardWobble === 'function') triggerCardWobble();
+
+      setTimeout(() => {
+        isSubmittingTaskPlus = false;
+        renderDosenSocialTasks();
+      }, 1000);
+
+    }, 900);
+  }, 900);
 }
+
+// Aliases for backwards compatibility
+window.openSevimaAiModal = openAiCompanionModal;
+window.closeSevimaAiModal = closeAiCompanionModal;
+window.submitAiRepostWithComment = function() {
+  const firstUncompleted = DOSEN_SOCIAL_TASKS.find(t => !t.completed);
+  if (firstUncompleted) submitTaskPlusGamification(firstUncompleted.id);
+  else showToast('✅ Seluruh Task+ Dosen telah kamu selesaikan!');
+};
 
 
 /* ==================== 100% AUTOMATIC DEVICE & OS DETECTION ENGINE ==================== */
@@ -6717,7 +6965,7 @@ function submitNewComment(e) {
   if (inp) inp.value = '';
 }
 
-/* ==================== AI COMPANION & QUEST ACTIONS ==================== */
+/* ==================== SEVIMA AI & QUEST ACTIONS ==================== */
 function openAiCompanionModal(initialTab) {
   vibrate(12);
   var modal = document.getElementById('ai-companion-modal');
@@ -6752,7 +7000,7 @@ function answerAiQuiz(questId, btn, isCorrect) {
   if (isCorrect) {
     btn.classList.add('correct');
     btn.innerHTML = '✅ ' + btn.textContent + ' — Jawaban Benar!';
-    addPoints(150, '🎉 Jawaban Benar! +150 XP dari AI Companion!');
+    addPoints(150, '🎉 Jawaban Benar! +150 XP dari Sevima AI!');
     var card = document.getElementById('quest-card-' + questId);
     if (card) {
       setTimeout(function() {
@@ -8553,7 +8801,7 @@ function openAcademicMenuCustom(icon, title, subtitle, htmlContent) {
     </div>
   </div>
 
-  <!-- ==================== MODAL: AI COMPANION, GAMIFIKASI & POSTING KOMUNITAS ==================== -->
+  <!-- ==================== MODAL: SEVIMA AI, GAMIFIKASI & POSTING KOMUNITAS ==================== -->
   <div class="sheet-backdrop" id="ai-companion-modal" onclick="if(event.target===this) closeAiCompanionModal()">
     <div class="sheet-content-box" style="max-height:88vh;overflow-y:auto;">
       <div class="sheet-handle-bar"></div>
@@ -8562,8 +8810,8 @@ function openAcademicMenuCustom(icon, title, subtitle, htmlContent) {
         <div style="display:flex;align-items:center;gap:10px;">
           <div style="font-size:28px;background:var(--green-pale);padding:6px;border-radius:12px;">🤖</div>
           <div>
-            <div style="font-size:16px;font-weight:900;color:var(--text);">EdLink AI Companion</div>
-            <div style="font-size:10px;color:var(--green);font-weight:800;">✦ ASISTEN GAMIFIKASI & KOMUNITAS KAMPUS</div>
+            <div style="font-size:16px;font-weight:900;color:var(--text);">Sevima AI</div>
+            <div style="font-size:10px;color:var(--green);font-weight:800;">✦ ASISTEN CERDAS AKADEMIK & GAMIFIKASI DOSEN</div>
           </div>
         </div>
         <button style="background:none;border:none;font-size:20px;cursor:pointer;" onclick="closeAiCompanionModal()">✕</button>
@@ -8573,7 +8821,7 @@ function openAcademicMenuCustom(icon, title, subtitle, htmlContent) {
       <div class="ai-tab-segmented">
         <button class="ai-tab-btn active" id="tab-btn-quest" onclick="switchAiTab('quest')">🎮 AI Quest (+XP)</button>
         <button class="ai-tab-btn" id="tab-btn-post" onclick="switchAiTab('post')">🚀 Upload Postingan</button>
-        <button class="ai-tab-btn" id="tab-btn-social" onclick="switchAiTab('social')">📊 Repost & Subs</button>
+        <button class="ai-tab-btn" id="tab-btn-social" onclick="switchAiTab('social')">✨ Task+ (Dosen Gamifikasi)</button>
       </div>
 
       <!-- TAB 1: AI QUEST & GAMIFIKASI -->
@@ -8677,140 +8925,147 @@ function openAcademicMenuCustom(icon, title, subtitle, htmlContent) {
         </form>
       </div>
 
-      <!-- TAB 3: MANAJEMEN REPOST, LIKE, SUBSCRIBERS & AI VERIFIKASI GAMIFIKASI -->
+                        <!-- TAB 3: TASK+ (GAMIFIKASI REPOST & KOMENTAR DARI AKUN DOSEN) -->
       <div id="ai-tab-content-social" style="display:none;">
         
-        <!-- Creator Analytics Summary Card -->
-        <div class="creator-stats-box">
+        <!-- Gamification & Task+ Stats Summary Card -->
+        <div class="creator-stats-box" style="margin-bottom:12px;">
           <div>
-            <div class="creator-stat-num" id="stat-my-likes">342</div>
-            <div class="creator-stat-lbl">Likes ❤️</div>
+            <div class="creator-stat-num" id="stat-taskplus-xp" style="color:var(--green);">1,450</div>
+            <div class="creator-stat-lbl">XP Task+ ⚡</div>
           </div>
           <div>
-            <div class="creator-stat-num" id="stat-my-reposts">84</div>
-            <div class="creator-stat-lbl">Reposts 🔁</div>
+            <div class="creator-stat-num" id="stat-taskplus-completed" style="color:#0284c7;">1 / 4</div>
+            <div class="creator-stat-lbl">Task Selesai ✅</div>
           </div>
           <div>
-            <div class="creator-stat-num" id="stat-my-subs">418</div>
-            <div class="creator-stat-lbl">Subscribers 👥</div>
+            <div class="creator-stat-num" id="stat-taskplus-coins" style="color:#eab308;">480</div>
+            <div class="creator-stat-lbl">Koin Hadiah 🪙</div>
           </div>
           <div>
-            <div class="creator-stat-num" id="stat-my-posts">3</div>
-            <div class="creator-stat-lbl">Postingan 📝</div>
+            <div class="creator-stat-num" id="stat-taskplus-rank" style="color:#8b5cf6;">#3</div>
+            <div class="creator-stat-lbl">Rank Gamifikasi 🏆</div>
           </div>
         </div>
 
-        <!-- 1. AI VERIFIER UNGGAHAN (BUKTI SUBSCRIBE & REPOST RESMI KAMPUS) -->
-        <div class="ai-quest-card" style="margin-bottom:14px;border:1.5px solid rgba(16,185,129,0.35);background:radial-gradient(circle at 90% 10%, rgba(16,185,129,0.08) 0%, var(--card) 100%);">
+        <!-- Task+ System Information Banner -->
+        <div style="background:linear-gradient(135deg, rgba(7,133,42,0.1) 0%, rgba(2,132,199,0.12) 100%);border:1px solid rgba(7,133,42,0.25);border-radius:14px;padding:12px 14px;margin-bottom:14px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:12px;font-weight:900;color:var(--text);display:flex;align-items:center;gap:6px;">
+              <span>🎯</span> Task+ Gamifikasi Dosen & Sevima AI
+            </span>
+            <span class="auto-allow-pill" style="font-size:10px;background:var(--green-pale);color:var(--green);">✅ Sevima AI Active</span>
+          </div>
+          <p style="font-size:11px;color:var(--muted);line-height:1.45;margin-top:5px;margin-bottom:0;">
+            Dosen memberikan tugas gamifikasi berupa link video YouTube Sevima, Instagram riset kampus, LinkedIn, atau TikTok. Buka link tugas dari dosen, repost ke media sosialmu beserta komentar refleksi, lalu verifikasi instan bersama Sevima AI untuk klaim bonus XP dan Koin!
+          </p>
+        </div>
+
+        <!-- DOSEN EXCLUSIVE PORTAL: DEPLOY TASK+ BARU (Visible when logged in as Dosen) -->
+        <div id="dosen-taskplus-manage-box" style="display:none;margin-bottom:14px;background:#f0fdf4;border:1.5px solid #86efac;border-radius:14px;padding:14px;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
             <div style="display:flex;align-items:center;gap:6px;">
-              <span style="font-size:18px;">🤖</span>
-              <span style="font-size:12px;font-weight:900;color:var(--text);">AI Verifier Unggahan (Bukti Subs & Repost)</span>
-            </div>
-            <span style="font-size:10px;font-weight:900;color:var(--green);background:var(--green-pale);padding:2px 8px;border-radius:10px;">+200 XP</span>
-          </div>
-          <p style="font-size:11px;color:var(--muted);line-height:1.4;margin-bottom:10px;">
-            Unggah tangkapan layar bukti kamu sudah Subscribe channel kampus (YouTube/Instagram/TikTok) atau Repost berita rektorat. AI Vision akan memverifikasi keasliannya secara otomatis.
-          </p>
-
-          <div style="display:flex;gap:8px;margin-bottom:10px;">
-            <select id="ai-verify-platform" style="flex:1;padding:8px;border-radius:10px;border:1px solid var(--border);background:var(--bg);font-size:11px;font-weight:700;color:var(--text);outline:none;">
-              <option value="YouTube Sevima Official">📺 YouTube Sevima Official (Subscribe & Bell)</option>
-              <option value="Instagram Kampus">📸 Instagram Kampus (@edlink.campus)</option>
-              <option value="LinkedIn Kemahasiswaan">💼 LinkedIn Kemahasiswaan & Riset</option>
-              <option value="TikTok Edukasi">🎵 TikTok Edukasi Kampus</option>
-            </select>
-          </div>
-
-          <!-- File Upload Dropzone -->
-          <div id="ai-upload-dropzone" onclick="document.getElementById('ai-proof-file-input').click()" style="border:2px dashed rgba(7,133,42,0.35);border-radius:12px;padding:16px 12px;text-align:center;cursor:pointer;background:var(--bg);transition:all 0.2s ease;">
-            <input type="file" id="ai-proof-file-input" accept="image/*" style="display:none;" onchange="handleProofImageSelected(event)" />
-            <div id="ai-upload-placeholder">
-              <span style="font-size:26px;">📸</span>
-              <div style="font-size:11px;font-weight:800;color:var(--text);margin-top:4px;">Klik untuk Unggah Screenshot Bukti</div>
-              <div style="font-size:10px;color:var(--muted);margin-top:2px;">Format JPG, PNG (Maks 5MB)</div>
-            </div>
-            <div id="ai-upload-preview-box" style="display:none;align-items:center;gap:10px;text-align:left;">
-              <img id="ai-upload-preview-img" src="" style="width:48px;height:48px;border-radius:8px;object-fit:cover;border:1px solid var(--border);" />
-              <div style="flex:1;min-width:0;">
-                <div id="ai-upload-filename" style="font-size:11px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">screenshot_bukti.png</div>
-                <div style="font-size:10px;color:var(--green);font-weight:700;">✅ Gambar siap dianalisis AI Vision</div>
+              <span style="font-size:18px;">👨‍🏫</span>
+              <div>
+                <div style="font-size:13px;font-weight:900;color:#166534;">Panel Dosen: Deploy Task+ Sosmed</div>
+                <div style="font-size:10px;color:#15803d;font-weight:700;">Buat penugasan interaktif repost & komentar untuk mahasiswa</div>
               </div>
-              <button type="button" onclick="event.stopPropagation(); clearProofImage();" style="background:none;border:none;font-size:14px;color:#ef4444;cursor:pointer;padding:4px;">✕</button>
             </div>
+            <button class="btn-schedule-pill" style="background:#16a34a;color:#fff;font-size:11px;padding:6px 12px;font-weight:800;" onclick="toggleDeployTaskPlusForm()">
+              ➕ Buat Task+ Baru
+            </button>
           </div>
 
-          <!-- Live AI Scanning Progress Banner -->
-          <div id="ai-scanning-progress-wrap" style="display:none;margin-top:10px;padding:10px 12px;border-radius:10px;background:#f0fdf4;border:1px solid #86efac;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-              <span id="ai-scan-step-title" style="font-size:11px;font-weight:800;color:#166534;">🔍 [1/3] Membaca tangkapan layar (OCR Vision Scan)...</span>
-              <span id="ai-scan-pct" style="font-size:11px;font-weight:900;color:#166534;">35%</span>
+          <!-- Deploy Task+ Form Collapsible -->
+          <form id="form-dosen-deploy-taskplus" style="display:none;margin-top:12px;padding-top:12px;border-top:1px dashed #86efac;" onsubmit="deployNewTaskPlus(event)">
+            <div class="form-group-field" style="margin-bottom:8px;">
+              <label class="form-input-label">Mata Kuliah Pengampu</label>
+              <div class="form-input-box">
+                <select id="taskplus-inp-matkul" style="width:100%;border:none;background:transparent;outline:none;font-size:12px;font-weight:700;color:var(--text);">
+                  <option value="Pemrograman Mobile">Pemrograman Mobile (Dr. Ahmad Fauzi)</option>
+                  <option value="Basis Data Lanjut">Basis Data Lanjut (Dr. Siti Rahma)</option>
+                  <option value="Kecerdasan Buatan & Kalkulus">Kecerdasan Buatan (Prof. Budi Santoso)</option>
+                  <option value="Jaringan Komputer Enterprise">Jaringan Komputer (Dr. Rina Yulianti)</option>
+                </select>
+              </div>
             </div>
-            <div style="width:100%;height:6px;background:#bbf7d0;border-radius:6px;overflow:hidden;">
-              <div id="ai-scan-bar" style="width:35%;height:100%;background:#16a34a;transition:width 0.3s ease;"></div>
+
+            <div class="form-group-field" style="margin-bottom:8px;">
+              <label class="form-input-label">Platform Media Sosial Target</label>
+              <div class="form-input-box">
+                <select id="taskplus-inp-platform" style="width:100%;border:none;background:transparent;outline:none;font-size:12px;font-weight:700;color:var(--text);">
+                  <option value="YouTube Sevima Official">📺 YouTube (Sevima Official / Tutorial)</option>
+                  <option value="Instagram Kampus">📸 Instagram (@edlink.campus / Riset)</option>
+                  <option value="LinkedIn Kemahasiswaan">💼 LinkedIn (Artikel Riset & Kampus Merdeka)</option>
+                  <option value="TikTok Edukasi">🎵 TikTok (Microlearning Kampus)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group-field" style="margin-bottom:8px;">
+              <label class="form-input-label">Judul Task+ Gamifikasi</label>
+              <div class="form-input-box">
+                <input type="text" id="taskplus-inp-title" placeholder="Contoh: Tonton & Repost Video: Clean Architecture Android" required />
+              </div>
+            </div>
+
+            <div class="form-group-field" style="margin-bottom:8px;">
+              <label class="form-input-label">Tautan / Link Materi dari Akun Dosen (URL Target)</label>
+              <div class="form-input-box">
+                <input type="url" id="taskplus-inp-link" placeholder="https://youtube.com/watch?v=... atau https://instagram.com/p/..." required />
+              </div>
+            </div>
+
+            <div class="form-group-field" style="margin-bottom:8px;">
+              <label class="form-input-label">Instruksi Pengerjaan (Repost & Refleksi)</label>
+              <div class="form-input-box" style="padding:6px 10px;">
+                <textarea id="taskplus-inp-desc" rows="3" style="width:100%;border:none;background:transparent;outline:none;font-size:11px;font-family:inherit;resize:none;" placeholder="Jelaskan apa yang harus ditonton, di-repost, dan topik komentar refleksi yang diminta..." required></textarea>
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+              <div>
+                <label style="font-size:10px;font-weight:800;color:var(--muted);display:block;margin-bottom:2px;">Bonus XP:</label>
+                <input type="number" id="taskplus-inp-xp" value="250" style="width:100%;padding:6px 8px;border-radius:8px;border:1px solid #86efac;background:#fff;font-size:11px;font-weight:800;outline:none;" />
+              </div>
+              <div>
+                <label style="font-size:10px;font-weight:800;color:var(--muted);display:block;margin-bottom:2px;">Bonus Koin:</label>
+                <input type="number" id="taskplus-inp-coins" value="100" style="width:100%;padding:6px 8px;border-radius:8px;border:1px solid #86efac;background:#fff;font-size:11px;font-weight:800;outline:none;" />
+              </div>
+            </div>
+
+            <button type="submit" class="btn-schedule-pill" style="width:100%;padding:10px;background:#16a34a;color:#fff;font-weight:900;">
+              🚀 Terbitkan Task+ Sekarang ke Mahasiswa
+            </button>
+          </form>
+
+          <!-- Dosen Real-time Student Submissions Monitor -->
+          <div style="margin-top:14px;border-top:1px dashed #86efac;padding-top:10px;">
+            <div style="font-size:12px;font-weight:900;color:#166534;margin-bottom:6px;">📊 Rekap Submisi Mahasiswa (Real-time Monitor)</div>
+            <div id="dosen-taskplus-submissions-list">
+              <!-- Rendered via renderDosenSubmissionsList() -->
             </div>
           </div>
-
-          <button class="btn-schedule-pill" id="btn-run-ai-verification" style="width:100%;padding:10px;margin-top:10px;background:linear-gradient(135deg, #07852a 0%, #055a1d 100%);color:#fff;font-weight:900;" onclick="triggerAiProofVerification()">
-            🤖 Verifikasi Bukti dengan AI Vision (+200 XP)
-          </button>
         </div>
 
-        <!-- 2. REPOST PAKE LINK & KOMENTAR (GAMIFIKASI INTERAKTIF) -->
-        <div class="ai-quest-card" style="margin-bottom:14px;border:1.5px solid rgba(14,165,233,0.35);background:radial-gradient(circle at 10% 90%, rgba(14,165,233,0.08) 0%, var(--card) 100%);">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-            <div style="display:flex;align-items:center;gap:6px;">
-              <span style="font-size:18px;">🔁</span>
-              <span style="font-size:12px;font-weight:900;color:var(--text);">Kirim Repost dengan Tautan & Komentar</span>
-            </div>
-            <span style="font-size:10px;font-weight:900;color:#0284c7;background:#e0f2fe;padding:2px 8px;border-radius:10px;">Hingga +250 XP</span>
-          </div>
-          <p style="font-size:11px;color:var(--muted);line-height:1.4;margin-bottom:10px;">
-            Bagikan link postingan yang kamu repost ke media sosial dan tulis komentar/catatan refleksimu. AI akan menilai kualitas komentar dan memberikan bonus XP gamifikasi!
-          </p>
-
-          <div style="display:flex;flex-direction:column;gap:8px;">
-            <div>
-              <label style="font-size:10px;font-weight:800;color:var(--muted);display:block;margin-bottom:3px;">🔗 URL / Tautan Repost Media Sosial:</label>
-              <input type="url" id="ai-repost-url-input" placeholder="https://linkedin.com/posts/... atau https://instagram.com/p/..." style="width:100%;padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:var(--bg);font-size:11px;color:var(--text);outline:none;" />
-            </div>
-
-            <div>
-              <label style="font-size:10px;font-weight:800;color:var(--muted);display:block;margin-bottom:3px;">💬 Komentar & Refleksi Edukatif Kamu:</label>
-              <textarea id="ai-repost-comment-input" rows="3" placeholder="Tuliskan ulasan, pemahaman konsep, atau mengapa materi ini penting..." style="width:100%;padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:var(--bg);font-size:11px;color:var(--text);outline:none;resize:none;"></textarea>
-            </div>
-          </div>
-
-          <!-- Live AI Evaluation Result -->
-          <div id="ai-repost-eval-result" style="display:none;margin-top:10px;padding:10px 12px;border-radius:10px;background:#f0f9ff;border:1px solid #7dd3fc;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-              <span style="font-size:11px;font-weight:900;color:#0369a1;">🤖 Evaluasi Komentar oleh AI Companion</span>
-              <span id="ai-comment-score-badge" style="font-size:10px;font-weight:900;background:#0284c7;color:#fff;padding:2px 6px;border-radius:8px;">Skor: 96/100</span>
-            </div>
-            <div id="ai-comment-feedback-text" style="font-size:11px;color:#0c4a6e;line-height:1.4;">
-              Refleksi sangat analitis dan relevan dengan kurikulum teknik informatika.
-            </div>
-          </div>
-
-          <button class="btn-schedule-pill" id="btn-submit-ai-repost" style="width:100%;padding:10px;margin-top:10px;background:linear-gradient(135deg, #0284c7 0%, #0369a1 100%);color:#fff;font-weight:900;" onclick="submitAiRepostWithComment()">
-            🚀 Analisis AI & Klaim Gamifikasi (+250 XP)
-          </button>
+        <!-- MAHASISWA & ALL USERS: DAFTAR TASK+ DARI DOSEN -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <span style="font-size:13px;font-weight:900;color:var(--text);">📋 Daftar Task+ Aktif dari Dosen</span>
+          <span style="font-size:10px;color:var(--green);font-weight:800;">Tugas Berhadiah XP & Koin</span>
         </div>
 
-        <!-- 3. LIST OF POSTS & VERIFIED REPOSTS -->
-        <div style="font-size:13px;font-weight:900;margin-bottom:8px;color:var(--text);display:flex;justify-content:space-between;align-items:center;">
-          <span>📋 Riwayat Repost & Kontribusi Anda</span>
-          <span style="font-size:10px;color:var(--green);font-weight:800;">Real-time Portfolio</span>
+        <!-- Dynamic Container for Lecturer Tasks -->
+        <div id="dosen-social-tasks-list">
+          <!-- Rendered dynamically via renderDosenSocialTasks() -->
+        </div>
+
+        <!-- RIWAYAT & PORTFOLIO REPOST MAHASISWA -->
+        <div style="font-size:13px;font-weight:900;margin:16px 0 8px;color:var(--text);display:flex;justify-content:space-between;align-items:center;">
+          <span>🏆 Portfolio Task+ Mahasiswa Terverifikasi</span>
+          <span style="font-size:10px;color:var(--green);font-weight:800;">Nilai Sevima AI & SIAKAD</span>
         </div>
         <div id="ai-my-posts-list">
-          <div class="ai-quest-card">
-            <div style="font-weight:800;font-size:12px;">Implementasi Retrofit & Coroutines pada Android Studio</div>
-            <div style="font-size:10px;color:var(--muted);margin-top:2px;">Dipublikasikan 2 hari lalu • 142 Likes • 24 Reposts</div>
-            <div style="display:flex;gap:6px;margin-top:8px;">
-              <button class="btn-schedule-pill" style="padding:4px 10px;font-size:10px;" onclick="showToast('📋 Tautan postingan disalin ke clipboard')">Bagikan</button>
-              <button class="btn-schedule-pill" style="padding:4px 10px;font-size:10px;background:#fee2e2;color:#ef4444;" onclick="showToast('Postingan diarsipkan')">Hapus</button>
-            </div>
-          </div>
+          <!-- Rendered dynamically -->
         </div>
 
       </div>
